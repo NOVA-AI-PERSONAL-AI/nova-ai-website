@@ -744,14 +744,14 @@ function renderMessages(chat) {
       speakButton.textContent = "🔊 Read aloud";
       speakButton.className = "speak-button";
 
- 
+     
 speakButton.addEventListener("click", function () {
   if (!("speechSynthesis" in window)) {
     alert("Voice is not supported by this browser.");
     return;
   }
 
-  // If this button is already speaking, stop it.
+  // Stop reading when this button is clicked again.
   if (speakButton.dataset.speaking === "true") {
     window.speechSynthesis.cancel();
     speakButton.dataset.speaking = "false";
@@ -759,7 +759,7 @@ speakButton.addEventListener("click", function () {
     return;
   }
 
-  // Stop any other speech before starting this answer.
+  // Stop any previous speech.
   window.speechSynthesis.cancel();
 
   const cleanText = message.text
@@ -815,6 +815,9 @@ speakButton.addEventListener("click", function () {
   window.speechSynthesis.speak(speech);
 });
 
+
+      div.appendChild(speakButton);
+    }
 
     messages.appendChild(div);
   });
