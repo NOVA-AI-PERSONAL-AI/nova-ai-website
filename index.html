@@ -744,68 +744,77 @@ function renderMessages(chat) {
       speakButton.textContent = "🔊 Read aloud";
       speakButton.className = "speak-button";
 
-      speakButton.addEventListener("click", function () {
-        if (!("speechSynthesis" in window)) {
-          alert("Voice is not supported by this browser.");
-          return;
-        }
+ 
+speakButton.addEventListener("click", function () {
+  if (!("speechSynthesis" in window)) {
+    alert("Voice is not supported by this browser.");
+    return;
+  }
 
-        window.speechSynthesis.cancel();
+  // If this button is already speaking, stop it.
+  if (speakButton.dataset.speaking === "true") {
+    window.speechSynthesis.cancel();
+    speakButton.dataset.speaking = "false";
+    speakButton.textContent = "🔊 Read aloud";
+    return;
+  }
 
-       const cleanText = message.text
-  .replace(/```[\s\S]*?```/g, " code block ")
-  .replace(/`([^`]+)`/g, "$1")
-  .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
-  .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-  .replace(/^#{1,6}\s*/gm, "")
-  .replace(/^\s*>\s?/gm, "")
-  .replace(/^\s*[-*+]\s+/gm, "")
-  .replace(/^\s*\d+\.\s+/gm, "")
-  .replace(/\*\*(.*?)\*\*/g, "$1")
-  .replace(/__(.*?)__/g, "$1")
-  .replace(/\*(.*?)\*/g, "$1")
-  .replace(/_(.*?)_/g, "$1")
-  .replace(/~~(.*?)~~/g, "$1")
-  .replace(/[*_#~`]/g, "")
-  .replace(/[()[\]{}]/g, " ")
-  .replace(/\s+/g, " ")
-  .trim();
-
-const speech = new SpeechSynthesisUtterance(cleanText);
-
-const voices = window.speechSynthesis.getVoices();
-
-const femaleVoice = voices.find(voice =>
-  /female|zira|samantha|karen|susan|aria|jenny/i.test(voice.name) &&
-  voice.lang.toLowerCase().startsWith("en")
-);
-
-speech.voice = femaleVoice || voices.find(voice =>
-  voice.lang.toLowerCase().startsWith("en")
-) || null;
-
-speech.lang = speech.voice ? speech.voice.lang : "en-US";
-
-if (window.speechSynthesis.speaking) {
+  // Stop any other speech before starting this answer.
   window.speechSynthesis.cancel();
-  speakButton.textContent = "🔊 Read aloud";
-  return;
-}
 
-window.speechSynthesis.speak(speech);
-speakButton.textContent = "⏹ Stop reading";
+  const cleanText = message.text
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/^#{1,6}\s*/gm, "")
+    .replace(/^\s*>\s?/gm, "")
+    .replace(/^\s*[-*+]\s+/gm, "")
+    .replace(/^\s*\d+\.\s+/gm, "")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/__(.*?)__/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/_(.*?)_/g, "$1")
+    .replace(/~~(.*?)~~/g, "$1")
+    .replace(/[*_#~`]/g, "")
+    .replace(/[()[\]{}]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
-speech.onend = function () {
-  speakButton.textContent = "🔊 Read aloud";
-};
+  if (!cleanText) return;
 
-speech.onerror = function () {
-  speakButton.textContent = "🔊 Read aloud";
-};
-      });
+  const speech = new SpeechSynthesisUtterance(cleanText);
+  const voices = window.speechSynthesis.getVoices();
 
-      div.appendChild(speakButton);
-    }
+  const femaleVoice = voices.find(voice =>
+    /female|zira|samantha|karen|susan|aria|jenny/i.test(voice.name) &&
+    voice.lang.toLowerCase().startsWith("en")
+  );
+
+  speech.voice = femaleVoice || voices.find(voice =>
+    voice.lang.toLowerCase().startsWith("en")
+  ) || null;
+
+  speech.lang = speech.voice ? speech.voice.lang : "en-US";
+
+  speech.onstart = function () {
+    speakButton.dataset.speaking = "true";
+    speakButton.textContent = "⏹ Stop reading";
+  };
+
+  speech.onend = function () {
+    speakButton.dataset.speaking = "false";
+    speakButton.textContent = "🔊 Read aloud";
+  };
+
+  speech.onerror = function () {
+    speakButton.dataset.speaking = "false";
+    speakButton.textContent = "🔊 Read aloud";
+  };
+
+  window.speechSynthesis.speak(speech);
+});
+
 
     messages.appendChild(div);
   });
