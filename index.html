@@ -752,8 +752,26 @@ function renderMessages(chat) {
 
         window.speechSynthesis.cancel();
 
-       
-const speech = new SpeechSynthesisUtterance(message.text);
+       const cleanText = message.text
+  .replace(/```[\s\S]*?```/g, " code block ")
+  .replace(/`([^`]+)`/g, "$1")
+  .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1")
+  .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+  .replace(/^#{1,6}\s*/gm, "")
+  .replace(/^\s*>\s?/gm, "")
+  .replace(/^\s*[-*+]\s+/gm, "")
+  .replace(/^\s*\d+\.\s+/gm, "")
+  .replace(/\*\*(.*?)\*\*/g, "$1")
+  .replace(/__(.*?)__/g, "$1")
+  .replace(/\*(.*?)\*/g, "$1")
+  .replace(/_(.*?)_/g, "$1")
+  .replace(/~~(.*?)~~/g, "$1")
+  .replace(/[*_#~`]/g, "")
+  .replace(/[()[\]{}]/g, " ")
+  .replace(/\s+/g, " ")
+  .trim();
+
+const speech = new SpeechSynthesisUtterance(cleanText);
 
 const voices = window.speechSynthesis.getVoices();
 
@@ -767,9 +785,23 @@ speech.voice = femaleVoice || voices.find(voice =>
 ) || null;
 
 speech.lang = speech.voice ? speech.voice.lang : "en-US";
-window.speechSynthesis.cancel();
-window.speechSynthesis.speak(speech);
 
+if (window.speechSynthesis.speaking) {
+  window.speechSynthesis.cancel();
+  speakButton.textContent = "🔊 Read aloud";
+  return;
+}
+
+window.speechSynthesis.speak(speech);
+speakButton.textContent = "⏹ Stop reading";
+
+speech.onend = function () {
+  speakButton.textContent = "🔊 Read aloud";
+};
+
+speech.onerror = function () {
+  speakButton.textContent = "🔊 Read aloud";
+};
       });
 
       div.appendChild(speakButton);
